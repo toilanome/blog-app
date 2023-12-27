@@ -9,6 +9,8 @@ import multer from "multer";
 import fs from "fs";
 import Comments from "../models/Comments.js";
 import { log } from "console";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../configs/Cloud.js";
 dotenv.config();
 
 const { SECRET_KEY } = process.env;
@@ -106,67 +108,67 @@ export const getUserDetail = async (req, res) => {
   });
 };
 
-export const post = async (req, res) => {
-  try {
-    const userId = req.user._id;
+  export const post = async (req, res) => {
+    try {
+      const userId = req.user._id;
 
-    // Use the user ID to fetch user details from the database
-    const user = await User.findById(userId).select("-password");
-    const userName = user.userName;
+      // Use the user ID to fetch user details from the database
+      const user = await User.findById(userId).select("-password");
+      const userName = user.userName;
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-    const { originalname, path } = req.file;
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
-    const newPath = path + "." + ext;
 
-    fs.renameSync(path, newPath);
+      const { title, summary, content, categoryName } = req.body;
+  
 
-    const { title, summary, content, categoryName } = req.body;
+      const cloudGetUrl = await cloudinary.uploader.upload(req.file.path, {
+        folder:"BANK",
+        allowed_formats: ['jpg', 'png','jpeg'],
+        transformation:[{width:500,height:500, crop:'limit'}]
+      })
+      // Find or create the category based on the provided name
+      const category = await Category.findOrCreate({ name: categoryName });
 
-    // Find or create the category based on the provided name
-    const category = await Category.findOrCreate({ name: categoryName });
-
-    // Create the post document with the categoryId
-    const postDoc = await Post.create({
-      title,
-      summary,
-      content,
-      cover: newPath,
-      author: user._id,
-      category: category._id, // Assign the category to the post
-    });
-
-    // Update the category to include the newly created post
-    const updateCategory = await Category.findByIdAndUpdate(category._id, {
-      $addToSet: {
-        posts: postDoc._id,
-      },
-    });
-
-    if (!updateCategory) {
-      return res.status(400).json({
-        message: "Update category failed",
+      // Create the post document with the categoryId
+      const postDoc = await Post.create({
+        title,
+        summary,
+        content,
+        cover:cloudGetUrl.secure_url,
+        author: user._id,
+        category: category._id, // A  ssign the category to the post
       });
+
+      // Update the category to include the newly created post
+      const updateCategory = await Category.findByIdAndUpdate(category._id, {
+        $addToSet: {
+          posts: postDoc._id,
+        },
+      });
+
+      if (!updateCategory) {
+        return res.status(400).json({
+          message: "Update category failed",
+        });
+      }
+
+      // Populate the userName field in the author property
+      await postDoc.populate("author", "userName");
+
+      console.log("post ", postDoc);
+
+      return res.status(200).json({
+        success: postDoc ? true : false,
+        message: postDoc ? postDoc : "Create post failed",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-
-    // Populate the userName field in the author property
-    await postDoc.populate("author", "userName");
-
-    console.log("post ", postDoc);
-
-    return res.status(200).json({
-      success: postDoc ? true : false,
-      message: postDoc ? postDoc : "Create post failed",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
+  };
 
 export const updatePost = async (req, res) => {
     try {

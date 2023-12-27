@@ -17,6 +17,8 @@ const __filename = fileURLToPath(import.meta.url);
 // Get the directory name from the file path
 const __dirname = dirname(__filename);
 
+
+
 const app = express();
 app.use(express.json());
 app.use(cookieParser(SECRET_KEY));
@@ -24,6 +26,8 @@ app.use(cookieParser(SECRET_KEY));
 app.use(cors());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 app.use('/api', router);
+
+
 
 mongoose.connect(DB_URL).then(() => {
     console.log('database connection');

@@ -17,6 +17,13 @@ import mongoose from "mongoose";
         type: String,
         required: true
     },
+    role: {
+        type: String,
+        default: "user"
+    },
+    avatar: {
+        type: String,
+    },
 },
 { timestamps:true,versionKey: false })
 
