@@ -170,7 +170,7 @@ export const getUserDetail = async (req, res) => {
     }
   };
 
-export const updatePost = async (req, res) => {
+  export const updatePost = async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.user._id;
@@ -180,71 +180,81 @@ export const updatePost = async (req, res) => {
         return res.status(404).json({ error: "Post not found" });
       }
   
-      let newPath = null;
-      if (req.file) {
-        const { originalname, path } = req.file;
-        const parts = originalname.split(".");
-        const ext = parts[parts.length - 1];
-        newPath = path + "." + ext;
-        fs.renameSync(path, newPath);
-      }
-  
       const { title, summary, content, categoryName } = req.body;
+  
+      let cloudGetUrl;
+      
+      // Check if a new image file is provided
+      if (req.file) {
+        cloudGetUrl = await cloudinary.uploader.upload(req.file.path, {
+          folder: "BANK",
+          allowed_formats: ['jpg', 'png', 'jpeg'],
+          transformation: [{ width: 500, height: 500, crop: 'limit' }],
+        });
+      }
   
       const isAuthor = JSON.stringify(post?.author?._id) === JSON.stringify(userId);
   
       if (!isAuthor) {
         return res.status(400).json("Bạn không phải tác giả");
-      }
+      } 
   
       let categoryId = null;
   
       if (categoryName) {
         const category = await Category.findOne({ name: categoryName });
-        categoryId = category._id;
+        categoryId = category?._id;
       }
   
       console.log("Updating post with ID:", id);
   
+      // Create an object to hold the updated post data
+      const updatedPostData = {
+        title,
+        summary,
+        content,
+        ...(cloudGetUrl && { cover: cloudGetUrl.secure_url }), // Update cover only if a new image is provided
+        ...(categoryId && { category: categoryId }), // Update category only if categoryName is provided
+      };
+  
       const updatedPost = await Post.findByIdAndUpdate(
         id,
-        {
-          title,
-          summary,
-          content,
-          cover: newPath ? newPath : post.cover,
-          category: categoryId,
-        },
+        updatedPostData,
         { new: true } // This option returns the updated document
       ).populate({
         path: "category",
-        select:"name"
-      })  ;
-      
-      // xóa post trong bảng category cũ
-      await Category.updateOne(
-        { _id: post.category }, 
-        { $pull: { posts: post._id } }  // pull là xóa 
-      );
+        select: "name",
+      });
   
-      // thêm bài post vào bảng category mới
-      await Category.updateOne(
-        { _id: categoryId },  //  lấy _id của danh mục mới
-        { $addToSet: { posts: post._id } }  // thêm bài post vào category
-      );
+      // Update the categories
+      if (post.category !== categoryId) {
+        // Remove post from the old category
+        await Category.updateOne(
+          { _id: post.category },
+          { $pull: { posts: post._id } }
+        );
+  
+        // Add post to the new category
+        if (categoryId) {
+          await Category.updateOne(
+            { _id: categoryId },
+            { $addToSet: { posts: post._id } }
+          );
+        }
+      }
   
       console.log("Updated post:", updatedPost);
-        
+  
       res.status(200).json({
         message: "Post updated successfully",
-        updatedPost
-
+        updatedPost,
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   };
+  
   
 
 export const getSinglePage = async (req, res) => {
