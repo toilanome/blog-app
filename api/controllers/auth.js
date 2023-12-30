@@ -31,11 +31,17 @@ export const signUp = async (req, res) => {
         message: "Email đã tồn tại",
       });
     }
-
+    
     const hashPassword = await bcryptjs.hash(req.body.password, 10);
+    const cloudGetUrl = await cloudinary.uploader.upload(req.file.path, {
+      folder:"BANK",
+      allowed_formats: ['jpg', 'png','jpeg'],
+      transformation:[{width:500,height:500, crop:'limit'}]
+    })
     const userAccount = await User.create({
       ...req.body,
       password: hashPassword,
+      avatar : cloudGetUrl.secure_url
     });
     if (!userAccount) {
       throw new Error("Failed!");

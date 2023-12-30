@@ -6,6 +6,7 @@ export const signUpValidate = Joi.object({
   password: Joi.string().min(6).max(255).required(),
   confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   role: Joi.string(),
+  avatar: Joi.string(),
 });
 export const signInValidate = Joi.object({
  

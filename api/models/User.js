@@ -23,6 +23,7 @@ import mongoose from "mongoose";
     },
     avatar: {
         type: String,
+        default:""
     },
 },
 { timestamps:true,versionKey: false })

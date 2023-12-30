@@ -16,7 +16,7 @@
         storage:storage
     })
 
-    authRouter.post('/signup', signUp)
+    authRouter.post('/signup',upload.single('img'), signUp)
     authRouter.post('/signin', signIn)
     authRouter.get('/userDetail',verifyAccessToken, getUserDetail)
     authRouter.get('/getPost', getPost)
