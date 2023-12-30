@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
-import fs from "fs";
 import Comments from "../models/Comments.js";
 dotenv.config();
 
@@ -28,6 +27,7 @@ export const CreateComments = async (req, res) => {
       users: userId,
       posts,
       userName: isUser.userName,
+      avatar: isUser.avatar
     });
 
     await newComment.populate("posts", "title");

@@ -1,5 +1,5 @@
     import { Router } from "express";
-    import { getUserDetail, post, signIn, signUp,getPost, getSinglePage, updatePost, deletePost } from "../controllers/auth.js";
+    import { getUserDetail, post, signIn, signUp,getPost, getSinglePage, updatePost, deletePost, getAllUser } from "../controllers/auth.js";
     import { verifyAccessToken } from "../middleware/verifyToken.js";
     import { CloudinaryStorage } from "multer-storage-cloudinary";
     import multer from "multer";
@@ -19,6 +19,7 @@
     authRouter.post('/signup',upload.single('img'), signUp)
     authRouter.post('/signin', signIn)
     authRouter.get('/userDetail',verifyAccessToken, getUserDetail)
+    authRouter.get('/allUser',verifyAccessToken, getAllUser)
     authRouter.get('/getPost', getPost)
     authRouter.post('/post',upload.single('img'),verifyAccessToken, post)
     authRouter.get('/post/:id', getSinglePage)

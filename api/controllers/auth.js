@@ -114,6 +114,17 @@ export const getUserDetail = async (req, res) => {
   });
 };
 
+export const getAllUser = async (req, res) => {
+  const { _id } = req.user;
+  // select dùng để giấu các trường không mong muốn bị lộ
+  const response = await User.find().select("-password");
+
+  return res.status(200).json({
+    message: "Gọi users thành công",
+    response,
+  });
+};
+
   export const post = async (req, res) => {
     try {
       const userId = req.user._id;
@@ -162,7 +173,7 @@ export const getUserDetail = async (req, res) => {
       }
 
       // Populate the userName field in the author property
-      await postDoc.populate("author", "userName");
+      await postDoc.populate("author", "userName avatar");
 
       console.log("post ", postDoc);
 
@@ -299,9 +310,15 @@ export const getPost = async (req, res) => {
       })
       .populate({
         path : "comments",
-        select: "comment userName"
+        select: "comment userName avatar"
       })
       .sort({});
+
+      if (allPost) {
+        console.log("all pót", allPost);
+      }else{
+        console.log("none");
+      }
     return res.status(200).json({
       message: "gọi bài viết thành công",
       allPost,

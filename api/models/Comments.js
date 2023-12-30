@@ -19,7 +19,8 @@ var commentSchema = new mongoose.Schema({
             ref:'Post'
         }
     ],
-    userName : String
+    userName : String,
+    avatar : String
 },
 {
     timestamps:true, versionKey:false
