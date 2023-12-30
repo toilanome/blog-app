@@ -288,7 +288,7 @@ export const getSinglePage = async (req, res) => {
                     })
                     .populate({
                       path : "comments",
-                      select: "comment userName users"
+                      select: "comment userName users avatar"
                     })
     res.status(200).json({
       message: "gọi post thành công",
