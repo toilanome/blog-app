@@ -299,32 +299,49 @@ export const getSinglePage = async (req, res) => {
 
 export const getPost = async (req, res) => {
   try {
-    const allPost = await Post.find()
-      .populate({
-        path: "author",
-        select: "userName",
-      })
-      .populate({
-        path: "category",
-        select: "name",
-      })
-      .populate({
-        path : "comments",
-        select: "comment userName avatar"
-      })
-      .sort({});
 
-      if (allPost) {
-        console.log("all pót", allPost);
-      }else{
-        console.log("none");
+    const {
+      _page = 1,
+      _limit = 5,
+      _sort = "createdAt",
+      _order = 'asc'
+
+    } = req.query
+
+    const options = {
+      page : _page,
+      limit : _limit,
+      sort : {
+        [_sort] : _order  === "asc" ? 1 : -1
       }
+    }
+    const allPost = await Post.paginate({}, options)
+    const populatePost = await Post.populate(allPost, [
+      {path : "author", select : "userName"},
+      {path : "category", select : "name"},
+      {path : "comments", select : "userName avatar"},
+    ])
+      
+
+      if (!populatePost.docs || populatePost.docs === 0) {
+        return res.status(404).json({
+          message : "Không có bài post nào"
+        })
+      }
+
     return res.status(200).json({
       message: "gọi bài viết thành công",
-      allPost,
+      populatePost,
     });
-  } catch (error) {}
+  }  catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
 };
+
+}
 
 export const deletePost = async (req, res) => {
   try {
